@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flores Amarillas</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #fdf5e6; 
+            font-family: 'Georgia', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- PANTALLA DE INICIO --- */
+        #pantalla-inicio {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #fdf5e6;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            cursor: pointer;
+            transition: opacity 1s ease-in-out;
+        }
+
+        #pantalla-inicio h1 {
+            color: #d4af37; 
+            font-size: 2rem;
+            animation: latido 1.5s infinite;
+        }
+
+        #pantalla-inicio p {
+            color: #555;
+            font-style: italic;
+        }
+
+        @keyframes latido {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .oculto {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* --- TEXTOS DEL ÁRBOL --- */
+        .texto-container {
+            position: absolute;
+            top: 10%;
+            left: 5%;
+            z-index: 10;
+            opacity: 0; 
+        }
+
+        .texto-container p {
+            color: #4a4a4a;
+            font-size: 1.2rem;
+            margin: 5px 0;
+        }
+
+        .titulo {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: #d4af37; 
+        }
+
+        .contador {
+            margin-top: 15px;
+            font-size: 1.1rem;
+            color: #b8860b; 
+            font-weight: bold;
+        }
+
+        @keyframes aparecerTexto {
+            to { opacity: 1; }
+        }
+
+        canvas {
+            position: absolute;
+            bottom: 0;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="pantalla-inicio">
+        <h1>Toca la pantalla 🌻</h1>
+        <p>no le des click Daniela...</p>
+    </div>
+
+    <div class="texto-container" id="texto-romantico">
+        <p class="titulo">Flores amarillas para Daniela malvada</p>
+        <p>perdoname el detallito...</p>
+        <p></p>
+        <a href="https://music.youtube.com/watch?v=agw86S9pIKk" target="_blank" style="color: #d4af37; text-decoration: none; font-weight: bold;">¡Dale click para escuchar la canción! 🎶</a >
+        
+    </div>
+
+    <canvas id="canvasArbol"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvasArbol');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let maxNivel = 0; 
+        let animacionCorriendo = false;
+
+        // --- FUNCIÓN PARA LA VAQUITA Y EL SOMBRERO ---
+        function dibujarVaquitaYSombrero() {
+            ctx.save();
+            ctx.font = "40px Arial"; // Tamaño de los emojis
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+            
+            // Vaquita descansando al lado izquierdo del tronco
+            ctx.fillText("🐄", canvas.width / 2 + 570, canvas.height - 60);
+            
+        
+            
+            ctx.restore();
+        }
+
+        // --- FUNCIÓN PARA DIBUJAR UNA FLOR AMARILLA ---
+        function dibujarFlor(x, y, tamaño) {
+            ctx.beginPath();
+            ctx.fillStyle = '#FFC107'; 
+            ctx.arc(x, y, tamaño, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.fillStyle = '#FFD700'; 
+            ctx.arc(x - tamaño*0.2, y - tamaño*0.2, tamaño * 0.7, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.fillStyle = '#8B4513'; 
+            ctx.arc(x, y, tamaño * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // --- LÓGICA DEL ÁRBOL FRACTAL ---
+        function dibujarArbol(x, y, longitud, angulo, grosor, nivel) {
+            if (nivel > maxNivel) return;
+
+            ctx.beginPath();
+            ctx.save();
+            ctx.strokeStyle = '#3A2311'; 
+            ctx.lineWidth = grosor;
+            ctx.translate(x, y);
+            ctx.rotate(angulo * Math.PI / 180);
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -longitud);
+            ctx.stroke();
+
+            if (longitud < 10 || nivel > 10) {
+                // Racimo abundante de 5 flores
+                dibujarFlor(0, -longitud, 7.5);            
+                dibujarFlor(7, -longitud + 4, 6);          
+                dibujarFlor(-7, -longitud + 4, 6);         
+                dibujarFlor(5, -longitud - 6, 5.5);        
+                dibujarFlor(-5, -longitud - 6, 5.5);       
+                
+                ctx.restore();
+                return;
+            }
+
+            dibujarArbol(0, -longitud, longitud * 0.78, angulo - 20, grosor * 0.7, nivel + 1);
+            dibujarArbol(0, -longitud, longitud * 0.78, angulo + 20, grosor * 0.7, nivel + 1);
+
+            ctx.restore();
+        }
+
+        // --- ANIMACIÓN DEL CRECIMIENTO ---
+        function animar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            dibujarArbol(canvas.width / 2, canvas.height, 130, 0, 16, 0);
+            dibujarVaquitaYSombrero(); // Dibujamos nuestros amiguitos en cada frame
+            
+            if (maxNivel < 11) {
+                maxNivel += 0.06; 
+                requestAnimationFrame(animar);
+            }
+        }
+
+        // --- LÓGICA DEL CONTADOR DE TIEMPO ---
+        function iniciarContador() {
+            const fechaInicio = new Date(2023, 0, 1); // ¡Acuérdate de ajustar la fecha!
+            
+            setInterval(() => {
+                const ahora = new Date();
+                const diferencia = ahora - fechaInicio;
+
+                const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+                const horas = Math.floor((diferencia / (1000 * 60 * 60)) % 24);
+                const minutos = Math.floor((diferencia / 1000 / 60) % 60);
+                const segundos = Math.floor((diferencia / 1000) % 60);
+
+                document.getElementById("tiempo").innerHTML = 
+                    `${dias} días ${horas} horas ${minutos} minutos ${segundos} segundos`;
+            }, 1000);
+        }
+
+        // --- EVENTO CLIC EN PANTALLA DE INICIO ---
+        document.getElementById('pantalla-inicio').addEventListener('click', function() {
+            if (!animacionCorriendo) {
+                animacionCorriendo = true;
+                
+                this.classList.add('oculto');
+                animar();
+                
+                const contenedorTexto = document.getElementById('texto-romantico');
+                contenedorTexto.style.animation = "aparecerTexto 3s forwards";
+                contenedorTexto.style.animationDelay = "1.5s";
+                
+                iniciarContador();
+            }
+        });
+    </script>
+</body>
+</html>
